@@ -1,0 +1,56 @@
+#game{
+    position:absolute;
+    top:0;
+    left:0;
+    width:100vw;
+    height:100vh;
+}
+#chat{
+    position:absolute;
+    bottom:0;
+    left:0;
+    width:400px;
+    background-color:#00000022;
+    padding:10px;
+    height:250px;
+    display:flex;
+    flex-flow:column nowrap;
+    justify-content:flex-end;
+    overflow:clip;
+}
+#message{
+    width:390px;
+}
+#messages{
+    overflow:clip;
+    line-break:auto;
+}
+input{
+    background-color: transparent;
+    border:none;
+    outline:1px solid #00000055;
+    border-radius:2px;
+    margin-top:3px;
+}
+body{
+    font-family:monospace;
+    user-select:none;
+}
+.damage{
+    animation:damage 0.5s;
+}
+@keyframes damage{
+    0%{
+        box-shadow: inset 0px 0px 50px 13px rgba(255, 0, 0, 0.8);
+    }
+    100%{
+        box-shadow: none;
+    }
+}
+#game2{
+    position:absolute;
+    top:0;
+    left:0;
+    width:100vw;
+    height:100vh;
+}

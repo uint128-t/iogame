@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <canvas id="game" draggable="false"></canvas>
+    <div id="game2"></div>
+    <div id="chat">
+        <div id="messages"><b>Welcome</b></div>
+        <form action="" onsubmit="return send_message()">
+            <input type="text" id="message" placeholder="Press T to type a message..." autocomplete="off">
+        </form>
+    </div>
+    <script src="https://pixijs.download/release/pixi.min.js"></script>
+    <script src="socket.io.min.js"></script>
+    <script src="network.js"></script>
+    <script src="canvas.js"></script>
+    <script src="input.js"></script>
+    <script src="chat.js"></script>
+    <script src="client.js"></script>
+</body>
+</html>
