@@ -94,6 +94,10 @@ app.init({
     minimap.drawRect(0,0,2*MMAPWIDTH,2*MMAPHEIGHT);
     minimap.stroke({width:2,color:0});
     app.stage.addChild(minimap);
+    window.border = new PIXI.Graphics();
+    border.drawRect(0,0,2*MAPWIDTH,2*MAPHEIGHT);
+    border.stroke({width:2,color:0});
+    app.stage.addChild(border);
 });
 var player_sprite = {};
 var player_icon = {};
@@ -132,6 +136,7 @@ function ticker(dt){
     lastTick = ftime;
     damaged = false;
     minimap.position.set(2*dimW-MMAPMARGINW-2*MMAPWIDTH,MMAPMARGINH);
+    border.position.set(dimW-X-MAPWIDTH,dimH-Y-MAPHEIGHT);
 }
 
 function tick(dt,timestamp){
