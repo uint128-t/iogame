@@ -169,7 +169,7 @@ function minimapY(y){
 }
 function drawPlayer(id,x,y){
     // X and Y are in global coordinates
-    if (Math.abs(x-X)>dimW+20 || Math.abs(y-Y)>dimH+20) return;
+    if (Math.abs(x-X)>dimW+50 || Math.abs(y-Y)>dimH+50) return;
     player_sprite[id].position.set(x-X+dimW,y-Y+dimH);
     player_text[id].position.set(x-X+dimW,y-Y+dimH-30);
     player_icon[id].position.set(minimapX(x),minimapY(y)); 
