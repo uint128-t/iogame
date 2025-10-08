@@ -1,0 +1,33 @@
+<html>
+    <head>
+        <title>pixi.js test</title>
+        <style>
+            html, body { height:100%; margin: 0; padding: 0; overflow: hidden; }
+            #canvasContainer {width:100%; height:100%;display: block;}
+        </style>
+    </head>
+    <body>
+        <div id="canvasContainer"></div>
+        <script src="https://pixijs.download/release/pixi.min.js"></script>
+        <script>
+            
+            const app = new PIXI.Application();
+            app.init({
+                resizeTo: window,
+                autoDensity: true,
+                backgroundColor: 0x1099bb,
+                resolution: window.devicePixelRatio || 1,
+            }).then(() => {
+                console.log(app.renderer.type===1?'webGL :)':'canvas :(');
+                document.getElementById('canvasContainer').appendChild(app.view);
+                
+
+            
+            })
+
+            
+            
+
+        </script>
+    </body>
+</html>

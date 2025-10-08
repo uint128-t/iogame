@@ -36,6 +36,11 @@ body{
     font-family:monospace;
     user-select:none;
 }
+html,body{
+    margin:0;
+    padding:0;
+    overflow:hidden;
+}
 .damage{
     animation:damage 0.5s;
 }
@@ -47,10 +52,12 @@ body{
         box-shadow: none;
     }
 }
-#game2{
+#tinter{
+    width:100vw;
+    height:100vh;
     position:absolute;
     top:0;
     left:0;
-    width:100vw;
-    height:100vh;
+    pointer-events:none;
+    z-index:100;
 }

@@ -5,16 +5,135 @@ const pi=Math.PI;
 const sq2=Math.SQRT2;
 const MAPWIDTH = 5000;
 const MAPHEIGHT = 5000;
+const tinter = document.getElementById("tinter")
 var showAllPlayers = false;
 
 lastTick = 0;
 function send_projectiles(){
     if (projectilesend.length) {
-        console.log("projectile");
         socket.emit("projectile", projectilesend);
         projectilesend = [];
     }
 }
+
+const app = new PIXI.Application();
+app.init({
+    resizeTo: window,
+    autoDensity: true,
+    backgroundColor: 0xffffff,
+    antialias: true,
+    resolution: window.devicePixelRatio || 1,
+}).then(() => {
+    document.body.appendChild(app.canvas);
+    app.ticker.add(ticker);
+    let circleGraphic = new PIXI.Graphics();
+    circleGraphic.beginFill(0xffffff);
+    circleGraphic.drawCircle(0,0,20);
+    circleGraphic.endFill();
+    circleGraphic.drawCircle(0,0,20);
+    circleGraphic.stroke({width:2,color:0});
+    window.playerTexture = app.renderer.generateTexture(circleGraphic);
+
+    let projectileGraphic = new PIXI.Graphics();
+    projectileGraphic.beginFill(0x00AAFF);
+    projectileGraphic.drawCircle(0,0,10);
+    projectileGraphic.endFill();
+    window.projectileTexture = app.renderer.generateTexture(projectileGraphic);
+
+    window.playerSprite = new PIXI.Sprite(window.playerTexture);
+    playerSprite.anchor.set(0.5);
+    playerSprite.roundPixels = true;
+    app.stage.addChild(playerSprite);
+    for (let i=0;i<max_projectiles;i++){
+        projectiles_sprites.push(new PIXI.Sprite(window.projectileTexture));
+        projectiles_sprites[i].anchor.set(0.5);
+        projectiles_sprites[i].visible = false;
+        projectiles_sprites[i].roundPixels = true;
+        app.stage.addChild(projectiles_sprites[i]);
+    }
+
+    let ptext = new PIXI.Text({
+        text: username,
+        style: {
+            fill: '#000000',
+            fontSize: 20,
+            fontFamily: 'monospace',
+        },
+        anchor: 0.5
+    });
+    ptext.roundPixels = true;
+    window.playername_text = ptext;
+    app.stage.addChild(ptext);
+    let fpstext = new PIXI.Text({
+        text: "FPS: ~",
+        style: {
+            fill: '#000000',
+            fontSize: 20,
+            fontFamily: 'monospace',
+        }
+    });
+    fpstext.roundPixels = true;
+    fpstext.anchor.set(1,0);
+    window.fps_text = fpstext;
+    app.stage.addChild(fpstext); 
+    let playerIconGraphic = new PIXI.Graphics();
+    playerIconGraphic.beginFill(0);
+    playerIconGraphic.drawCircle(0,0,5);
+    playerIconGraphic.stroke({width:2,color:0});
+    window.playerIcon = app.renderer.generateTexture(playerIconGraphic);
+    let currentPlayerIconGraphic = new PIXI.Graphics();
+    currentPlayerIconGraphic.beginFill(0);
+    currentPlayerIconGraphic.drawCircle(0,0,5);
+    currentPlayerIconGraphic.stroke({width:2,color:0x00AAFF});
+    let currentPlayerIcon = app.renderer.generateTexture(currentPlayerIconGraphic);
+    window.current_player_icon = new PIXI.Sprite(currentPlayerIcon);
+    current_player_icon.anchor.set(0.5);
+    current_player_icon.roundPixels = true;
+    app.stage.addChild(current_player_icon);
+    window.minimap = new PIXI.Graphics();
+    minimap.drawRect(0,0,2*MMAPWIDTH,2*MMAPHEIGHT);
+    minimap.stroke({width:2,color:0});
+    app.stage.addChild(minimap);
+});
+var player_sprite = {};
+var player_icon = {};
+var player_text = {};
+var ftime = 0;
+var FPSX = Array(60).fill(0);
+var FPSI = 0;
+var FPST = 0;
+function ticker(dt){
+    ftime+=dt.deltaMS;
+    tick(dt.deltaMS,ftime);
+    playerSprite.position.set(dimW, dimH);
+    for (let id of playerids) {
+        if (id!=socketid){
+            drawPlayer(id,playerX[id],playerY[id]);
+        }
+    }
+    while (projectileN && projectileTIME[projectileLEFT]+1000<ftime){
+        popProjectile();
+    }
+    for (let pji=0;pji<projectileN;pji++){
+        let pjid = (projectileLEFT+pji)%max_projectiles;
+        projectiles_sprites[pjid].position.set(getprojectileX(pjid,ftime)-X+dimW,getprojectileY(pjid,ftime)-Y+dimH);
+    }
+    playername_text.position.set(dimW, dimH-30);
+    current_player_icon.position.set(minimapX(X),minimapY(Y));
+
+    if (lastTick%1000<=500 && ftime%1000>500){
+        fps_text.text = `FPS: ${Math.round(FPST/60)}`;
+    }
+    FPSI = (FPSI+1)%60;
+    FPST -= FPSX[FPSI];
+    FPSX[FPSI] = Math.round(app.ticker.FPS);
+    FPST += FPSX[FPSI];
+    fps_text.position.set(2*dimW-10,10);
+    lastTick = ftime;
+    damaged = false;
+    minimap.position.set(2*dimW-MMAPMARGINW-2*MMAPWIDTH,MMAPMARGINH);
+}
+
 function tick(dt,timestamp){
     let dx=0;
     let dy=0;
@@ -27,25 +146,28 @@ function tick(dt,timestamp){
     Y+=speed*dt*dy/scl;
     X = Math.min(Math.max(X,20-MAPWIDTH),MAPWIDTH-20);
     Y = Math.min(Math.max(Y,20-MAPHEIGHT),MAPHEIGHT-20);
-    for (let id of projectiles){
-        projectileCollision(id,timestamp);
+    for (let pjid=0;pjid<projectileN;pjid++){
+        projectileCollision((pjid+projectileLEFT)%max_projectiles,timestamp);
     }
     socket.volatile.emit("move",X,Y);
     send_projectiles();
-    return dt;
+}
+const MMAPMARGINH = 40;
+const MMAPMARGINW = 20;
+const MMAPWIDTH = 100;
+const MMAPHEIGHT = 100;
+function minimapX(x){
+    return 2*dimW-MMAPMARGINW-(MAPWIDTH-x)/(MAPWIDTH/MMAPWIDTH);
+}
+function minimapY(y){
+    return MMAPMARGINH+(y+MAPHEIGHT)/(MAPHEIGHT/MMAPHEIGHT);
 }
 function drawPlayer(id,x,y){
     // X and Y are in global coordinates
     if (Math.abs(x-X)>dimW+20 || Math.abs(y-Y)>dimH+20) return;
-    ctx.font = "20px monospace";
-    ctx.textAlign = "center";
-    ctx.fillStyle = "black";
-    ctx.fillText(playernames[id]||"...",x-X,y-Y-30);
-    ctx.beginPath();
-    ctx.ellipse(x-X,y-Y,20,20,0,0,2*Math.PI);
-    ctx.fillStyle = "white";
-    ctx.fill();
-    ctx.stroke();
+    player_sprite[id].position.set(x-X+dimW,y-Y+dimH);
+    player_text[id].position.set(x-X+dimW,y-Y+dimH-30);
+    player_icon[id].position.set(minimapX(x),minimapY(y)); 
 }
 function getprojectileX(id,timestamp){
     return projectileX[id]+(timestamp-projectileTIME[id])*projectileDX[id];
@@ -53,25 +175,8 @@ function getprojectileX(id,timestamp){
 function getprojectileY(id,timestamp){
     return projectileY[id]+(timestamp-projectileTIME[id])*projectileDY[id];
 }
-var projectilesToRemove = [];
-function drawProjectile(id,timestamp){
-    let x = getprojectileX(id,timestamp);
-    let y = getprojectileY(id,timestamp);
-    if (Math.abs(x-X)<dimW+20 && Math.abs(y-Y)<dimH+20){
-        ctx.moveTo(x-X+10,y-Y);
-        ctx.ellipse(x-X,y-Y,10,10,0,0,2*Math.PI);
-    }
-    if (timestamp-projectileTIME[id]>1000){
-        projectilesToRemove.push(id);
-        delete projectileX[id];
-        delete projectileY[id];
-        delete projectileDX[id];
-        delete projectileDY[id];
-        delete projectilePLR[id];
-        delete projectileTIME[id];
-    }
-}
-let damageTime = -10000;
+var damageTime = -10000;
+var damaged = false;
 function projectileCollision(id,timestamp){
     // equation: find minimum T for (projX+projdx*t-X)^2+(projY+projdy*t-Y)^2
     // derivative: (projX+projdx*t-X)*projdx + (projY+projdy*t-Y)*projdy = 0
@@ -87,15 +192,12 @@ function projectileCollision(id,timestamp){
     let projectileMinDist = Math.hypot(getprojectileX(id,collisionTime)-X,getprojectileY(id,collisionTime)-Y);
     if (lastTick<=collisionTime && collisionTime<=timestamp && projectileMinDist<=30){
         console.log("hit");
-        canvas.animate(
-            [
-                {boxShadow: "inset 0px 0px 100px 50px rgba(255, 0, 0, 0.8)"},
-                {}
-            ], {
-                duration:500
-            }
-        );
         damageTime = timestamp;
+        if (!damaged){
+            tinter.animate([{boxShadow: "inset 0px 0px 100px 50px rgba(255, 0, 0, 0.6)"},{}
+                ], { duration: 500 });
+        }
+        damaged = true;
     }
 }
 var FPS = 0;
@@ -103,78 +205,7 @@ var projectilesend = [];
 function createProjectile(x,y,dx,dy){
     projectilesend.push([x,y,dx,dy]);
 }
-function render(timestamp){
-    requestAnimationFrame(render);
-    ctx.clearRect(-dimW,-dimH,dimW*2,dimH*2);
-    let dt = timestamp - lastTick;
-    let delta = tick(dt,timestamp);
-    // draw FPS
-    ctx.fillStyle = "black";
-    ctx.textAlign = "right";
-    ctx.font = "24px monospace";
-    if (lastTick%500<=250 && timestamp%500>250){
-        FPS = Math.round(1000/delta);
-    }
-    ctx.fillText(`Projectiles: ${projectiles.length} FPS: ${FPS}`,dimW-10,24-dimH);
-    // draw players
-    for (let id of playerids) {
-        if (id!=socketid){
-            drawPlayer(id,playerX[id],playerY[id]);
-        }
-    }
-    drawPlayer(socketid,X,Y);
-    // draw projectiles
-    ctx.fillStyle = "blue";
-    ctx.beginPath();
-    for (let prj of projectiles){
-        drawProjectile(prj,timestamp);
-    }
-    ctx.fill();
-    // ctx.stroke();
-    let newProjectiles = [];
-    for (let prj of projectiles){
-        if (!projectilesToRemove.includes(prj)){
-            newProjectiles.push(prj);
-        }
-    }
-    projectiles = newProjectiles;
-    projectilesToRemove = [];
-    // Draw origin
-    ctx.fillStyle = "white";
-    ctx.beginPath();
-    ctx.ellipse(0-X,0-Y,10,10,0,0,2*pi);
-    ctx.fill();
-    ctx.stroke();
-    // Draw minimap
-    ctx.rect(dimW-120,40-dimH,100,100);
-    ctx.lineWidth = 2;
-    ctx.stroke();
-    ctx.strokeStyle = "red";
-    for (let player of playerids){
-        if (player==socketid || !showAllPlayers){
-            continue;
-        }
-        ctx.beginPath();
-        ctx.ellipse(dimW-70+playerX[player]*50/MAPWIDTH, 90-dimH+playerY[player]*50/MAPHEIGHT,5,5,0,0,2*pi);
-        ctx.stroke();
-    }
-    ctx.strokeStyle = "black";
-    ctx.beginPath();
-    ctx.ellipse(dimW-70+X*50/MAPWIDTH, 90-dimH+Y*50/MAPHEIGHT,5,5,0,0,2*pi);
-    ctx.stroke();
-    // Draw map boundaries
-    ctx.beginPath();
-    ctx.rect(-MAPWIDTH-X,-MAPHEIGHT-Y,2*MAPWIDTH,2*MAPHEIGHT);
-    ctx.stroke();
-    lastTick = timestamp;
-    // Draw damage tint
-    if (timestamp-damageTime<500){
-        ctx.fillStyle = "red";
-        ctx.globalAlpha = 0.2-(timestamp-damageTime)/2500;
-        ctx.fillRect(-dimW,-dimH,dimW*2,dimH*2);
-        ctx.globalAlpha = 1;
-    }
-}
+
 onmousedown = (e)=>{
     let dx = e.clientX-dimW;
     let dy = e.clientY-dimH;
@@ -185,4 +216,3 @@ onmousedown = (e)=>{
     send_projectiles();
     // socket.volatile.emit("projectile",X,Y,dx,dy);
 }
-requestAnimationFrame(render);

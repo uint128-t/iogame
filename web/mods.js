@@ -1,5 +1,5 @@
 var poses = [[1,0],[2,0],[-1,0],[-2,0],[0,1],[0,2],[0,-1],[0,-2],[0,0],[1,2],[2,2],[-2,1],[-2,2],[2,-1],[2,-2],[-2,-2],[-1,-2]]
-onclick = (e)=>{
+onmousedown = (e)=>{
     let dx = e.clientX-dimW;
     let dy = e.clientY-dimH;
     let scl = 0.5*Math.max(1,Math.hypot(dx,dy));
@@ -8,13 +8,14 @@ onclick = (e)=>{
     for (let pos of poses){
         createProjectile(X-pos[0]*20,Y-pos[1]*20,dx,dy);
     }
+    send_projectiles();
 }
 
 setInterval(()=>{for(let player of playerids) createProjectile(X,Y,(playerX[player]-X)/10,(playerY[player]-Y)/10)})
 
 angle=0;setInterval(()=>{angle+=1;createProjectile(X,Y,2*Math.sin(angle),2*Math.cos(angle))})
 
-onclick = (e) => {
+onmousedown = (e) => {
     let tx = e.clientX - dimW+X;
     let ty = e.clientY - dimH+Y;
     for (let deg=0;deg<2*Math.PI;deg+=0.1){
@@ -24,7 +25,7 @@ onclick = (e) => {
     }
 }
 
-onclick = (e) => {
+onmousedown = (e) => {
     let tx = e.clientX - dimW + X;
     let ty = e.clientY - dimH + Y;
     for (let dat of poses) {
@@ -34,7 +35,7 @@ onclick = (e) => {
     }
 }
 
-onclick = (e) => {
+onmousedown = (e) => {
     let spd = 3;
     let tx = e.clientX - dimW+X;
     let ty = e.clientY - dimH+Y;
@@ -46,7 +47,7 @@ onclick = (e) => {
     }
 }
 
-onclick = (e) => {
+onmousedown = (e) => {
     let spd = 3;
     let tx = e.clientX - dimW + X;
     let ty = e.clientY - dimH + Y;
@@ -58,7 +59,7 @@ onclick = (e) => {
     }
 }
 
-onclick = (e) => {
+onmousedown = (e) => {
     let tx = e.clientX - dimW + X;
     let ty = e.clientY - dimH + Y;
     for (let k=0;k<1000;k++) {

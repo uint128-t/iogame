@@ -36,7 +36,7 @@ def player_connect(data):
 @socketio.on("join")
 def player_join(data):
     pid = flask.request.sid
-    playernames[pid] = data["name"][:30]
+    playernames[pid] = data["name"][:30].strip() or "Player"
     update_players()
     console.log(f"{data['name']} ({flask.request.remote_addr}) joined as {pid}")
 
@@ -78,7 +78,7 @@ def player_projectile(prjlist):
 def command_kick(pid=""):
     for pidi in playerids.copy():
         if pidi.startswith(pid):
-            print(f"kicked {pidi} ({playernames[pidi]})")
+            print(f"kicked {pidi} ({playernames.get(pidi,"Unknown")})")
             socketio.server.disconnect(pidi)
 console.register_command("kick",command_kick)
 def command_say(*args):
