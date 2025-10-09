@@ -3,7 +3,6 @@ import eventlet
 import flask
 import flask_socketio
 import time
-from numpy import broadcast
 
 from . import console
 
