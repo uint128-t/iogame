@@ -2,11 +2,15 @@ import eventlet
 import threading
 import queue
 import readline
+import sys
 commands = queue.Queue()
 cont = queue.Queue()
 def console():
     while True:
-        command = input(">> ")
+        try:
+            command = input(">> ")
+        except EOFError:
+            command = "exit"
         commands.put(command)
         cont.get()
 
@@ -18,13 +22,14 @@ def processs_commands():
             process_command(cmd)
         except queue.Empty:
             eventlet.sleep(0.1)
+
 cmdp = {}
 cmdp["help"]=lambda:print("commands:",*cmdp.keys())
 def register_command(name,fn):
     cmdp[name] = fn
 def process_command(cmd):
     args = cmd.split()
-    if not args: return
+    if not args: return cont.put(1)
     name = args[0]
     if name not in cmdp:
         print("Command not found")
@@ -33,7 +38,6 @@ def process_command(cmd):
     cont.put(1)
 
 def log(text):
-    # print("\r"+str(text),end="\n>> ")
-    print("\r"+str(text))
-    print(">> ",end=readline.get_line_buffer(),flush=True)
-    readline.redisplay()
+    print(end="\0337",flush=True)
+    print("\r"+text,flush=True)
+    print(">>",readline.get_line_buffer(),end="\0338",flush=True)

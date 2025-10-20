@@ -62,6 +62,7 @@ def player_message(text):
     pid = flask.request.sid
     if pid not in playerids: return
     socketio.emit("message",data=(pid,text))
+    console.log(f"{playernames.get(pid,'Unknown')}: {text}")
 
 @socketio.on("projectile")
 def player_projectile(prjlist):
@@ -98,6 +99,10 @@ console.register_command("say",command_say)
 def command_exit():
     sys.exit(0)
 console.register_command("exit",command_exit)
+def command_list():
+    for pid in playerids:
+        print(f"{pid}: {playernames.get(pid,'Unknown')}")
+console.register_command("list",command_list)
 
 TIME_PER_TICK = 0.05
 def emit_positions():

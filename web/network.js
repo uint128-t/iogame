@@ -15,7 +15,7 @@ var playernames = {};
 var playerX = {};
 var playerY = {};
 
-const max_projectiles = 10000;
+const max_projectiles = 30000;
 var projectileN = 0;
 var projectileLEFT = 0;
 var projectiles_sprites = [];
